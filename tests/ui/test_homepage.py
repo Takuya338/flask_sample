@@ -62,7 +62,7 @@ def test_homepage_renders(driver, settings):
     heading = WebDriverWait(driver, 15).until(
         EC.visibility_of_element_located((By.TAG_NAME, "h1"))
     )
-    assert "Flask with MySQL" in heading.text
+    assert "Flask MySQL App" in heading.text
 
 
 def test_db_test_page_status(driver, settings):
@@ -87,9 +87,9 @@ def test_login_page_renders(driver, settings):
     target_url = f"{settings['app_url']}/login"
     driver.get(target_url)
 
-    # ページタイトルの確認
+    # ページタイトルの確認（Bootstrap版では h2 タグを使用）
     heading = WebDriverWait(driver, 15).until(
-        EC.visibility_of_element_located((By.TAG_NAME, "h1"))
+        EC.visibility_of_element_located((By.TAG_NAME, "h2"))
     )
     assert "ログイン" in heading.text
 
@@ -132,7 +132,7 @@ def test_login_functionality(driver, settings):
     )
     
     assert "ダッシュボード" in driver.page_source
-    assert "山田太郎" in driver.page_source
+    assert "ようこそ、山田太郎さん" in driver.page_source
 
 
 def test_logout_functionality(driver, settings):
@@ -187,4 +187,4 @@ def test_navigation_flow(driver, settings):
     WebDriverWait(driver, 10).until(
         EC.visibility_of_element_located((By.TAG_NAME, "h1"))
     )
-    assert "Welcome to Flask with MySQL" in driver.page_source
+    assert "Flask MySQL App" in driver.page_source

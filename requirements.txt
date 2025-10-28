@@ -1,0 +1,12 @@
+Flask
+gunicorn
+PyMySQL
+python-dotenv
+pytest
+selenium
+Flask-Login
+Werkzeug
+flask-wtf
+wtforms
+email-validator
+requests

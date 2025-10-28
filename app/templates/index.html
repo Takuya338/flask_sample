@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask with MySQL</title>
+    <!-- Vue 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .info {
+            margin-top: 20px;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <div class="container">
+            <h1>{% raw %}{{ appData.message }}{% endraw %}</h1>
+            
+            <div class="info">
+                <p><strong>Python Version:</strong> {% raw %}{{ appData.python_version }}{% endraw %}</p>
+                <p><strong>Flask Version:</strong> {% raw %}{{ appData.flask_version }}{% endraw %}</p>
+                <p><strong>MySQL Version:</strong> {% raw %}{{ appData.mysql_version }}{% endraw %}</p>
+            </div>
+            
+            <a href="/db-test" class="btn">Test Database Connection</a>
+            <a href="/login" class="btn" style="background-color: #007bff; margin-left: 10px;">ログイン</a>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+        
+        createApp({
+            setup() {
+                const appData = ref({
+                    message: "{{ message }}",
+                    python_version: "{{ python_version }}",
+                    flask_version: "{{ flask_version }}",
+                    mysql_version: "{{ mysql_version }}"
+                });
+                
+                return {
+                    appData
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

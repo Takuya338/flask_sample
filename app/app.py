@@ -1,4 +1,6 @@
 import os
+import time
+from threading import Lock
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session
 import pymysql
 from dotenv import load_dotenv
@@ -87,8 +89,73 @@ db_params = {
     'port': int(os.getenv('MYSQL_PORT', '3306'))
 }
 
+_test_users_initialized = False
+_test_users_lock = Lock()
+
+
+def create_test_users():
+    """テスト用ユーザーを作成（初回起動時のみ）"""
+    conn = None
+    cursor = None
+    try:
+        conn = pymysql.connect(**db_params)
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT COUNT(*) FROM users')
+        user_count = cursor.fetchone()[0]
+
+        if user_count == 0:
+            test_users = [
+                ('山田太郎', 'yamada@example.com', 'password123'),
+                ('佐藤花子', 'sato@example.com', 'password123')
+            ]
+
+            for name, email, password in test_users:
+                password_hash = generate_password_hash(password)
+                cursor.execute(
+                    """
+                    INSERT INTO users (name, email, password_hash)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (name, email, password_hash),
+                )
+                print(f"Created test user: {name} ({email})")
+
+            conn.commit()
+            print("Test users created successfully!")
+
+        return True
+    except Exception as e:
+        print(f"Error creating test users: {e}")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+def ensure_test_users():
+    """テストユーザーが存在するように保証"""
+    global _test_users_initialized
+    if _test_users_initialized:
+        return
+
+    with _test_users_lock:
+        if _test_users_initialized:
+            return
+
+        for attempt in range(5):
+            if create_test_users():
+                _test_users_initialized = True
+                return
+            time.sleep(2)
+            print(f"Retrying test user creation (attempt {attempt + 2}/5)")
+
+
 @app.route('/')
 def index():
+    ensure_test_users()
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
@@ -104,6 +171,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """ログイン処理"""
+    ensure_test_users()
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
@@ -162,40 +230,6 @@ def db_test():
             status='error',
             message=f'Database connection failed: {str(e)}'
         )
-
-def create_test_users():
-    """テスト用ユーザーを作成（初回起動時のみ）"""
-    try:
-        conn = pymysql.connect(**db_params)
-        cursor = conn.cursor()
-        
-        # 既にユーザーが存在するかチェック
-        cursor.execute('SELECT COUNT(*) FROM users')
-        user_count = cursor.fetchone()[0]
-        
-        if user_count == 0:
-            # テストユーザーを作成
-            test_users = [
-                ('山田太郎', 'yamada@example.com', 'password123'),
-                ('佐藤花子', 'sato@example.com', 'password123')
-            ]
-            
-            for name, email, password in test_users:
-                password_hash = generate_password_hash(password)
-                cursor.execute("""
-                    INSERT INTO users (name, email, password_hash) 
-                    VALUES (%s, %s, %s)
-                """, (name, email, password_hash))
-                print(f"Created test user: {name} ({email})")
-            
-            conn.commit()
-            print("Test users created successfully!")
-        
-        cursor.close()
-        conn.close()
-        
-    except Exception as e:
-        print(f"Error creating test users: {e}")
 
 
 if __name__ == '__main__':

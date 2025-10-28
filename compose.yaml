@@ -21,7 +21,9 @@ services:
     depends_on:
       - db
     networks:
-      - flask-network
+      flask-network:
+        aliases:
+          - flask-app
 
   db:
     image: mysql:8.0
@@ -62,7 +64,7 @@ services:
     volumes:
       - .:/workspace
     environment:
-      - APP_URL=http://app:5000
+      - APP_URL=http://flask-app:5000
       - SELENIUM_REMOTE_URL=http://selenium:4444/wd/hub
     networks:
       - flask-network

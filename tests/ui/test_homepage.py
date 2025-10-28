@@ -29,12 +29,12 @@ def _wait_for_http(url: str, timeout: int = 60, expect_json: bool = False) -> bo
 @pytest.fixture(scope="session")
 def settings():
     return {
-        "app_url": os.getenv("APP_URL", "http://app:5000"),
+        "app_url": os.getenv("APP_URL", "http://flask-app:5000"),
         "selenium_url": os.getenv("SELENIUM_REMOTE_URL", "http://selenium:4444/wd/hub"),
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def driver(settings):
     selenium_status = settings["selenium_url"].split("/wd/hub", 1)[0] + "/status"
     if not _wait_for_http(selenium_status, expect_json=True):
@@ -45,8 +45,14 @@ def driver(settings):
         pytest.skip("Flask app is not reachable; skipping UI tests.")
 
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
+    options.add_argument("--headless")
+    options.add_argument("--disable-gpu")
     options.add_argument("--window-size=1280,720")
+    options.add_argument("--ignore-certificate-errors")
+    options.add_argument("--allow-insecure-localhost")
+    options.add_argument(
+        "--disable-features=HttpsOnlyMode,HttpsUpgrades,HttpsFirstMode,HttpsFirstModeV2"
+    )
     driver = webdriver.Remote(
         command_executor=settings["selenium_url"],
         options=options,
@@ -94,9 +100,13 @@ def test_login_page_renders(driver, settings):
     assert "ログイン" in heading.text
 
     # フォーム要素の存在確認
-    email_field = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.NAME, "email"))
-    )
+    try:
+        email_field = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.NAME, "email"))
+        )
+    except TimeoutException:
+        snippet = driver.page_source[:500]
+        pytest.fail(f"ログインページの要素が見つかりません: current_url={driver.current_url}, snippet={snippet}")
     password_field = driver.find_element(By.NAME, "password")
     submit_button = driver.find_element(By.CSS_SELECTOR, "input[type='submit']")
 
@@ -134,10 +144,19 @@ def test_login_functionality(driver, settings):
     assert "ダッシュボード" in driver.page_source
     assert "ようこそ、山田太郎さん" in driver.page_source
 
+    # 次のテストへ影響しないようログアウトしておく
+    logout_link = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.LINK_TEXT, "ログアウト"))
+    )
+    logout_link.click()
+    WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.TAG_NAME, "h1"))
+    )
+    assert "Flask MySQL App" in driver.page_source
+
 
 def test_logout_functionality(driver, settings):
     """ログアウト機能のUIテスト"""
-    # まずログイン
     driver.get(f"{settings['app_url']}/login")
     
     email_field = WebDriverWait(driver, 10).until(
@@ -150,6 +169,14 @@ def test_logout_functionality(driver, settings):
     driver.find_element(By.CSS_SELECTOR, "input[type='submit']").click()
     
     # ダッシュボードでログアウトボタンをクリック
+    try:
+        WebDriverWait(driver, 10).until(EC.url_contains("/dashboard"))
+    except TimeoutException:
+        snippet = driver.page_source[:500]
+        pytest.fail(f"ログイン後にダッシュボードへ遷移しませんでした: current_url={driver.current_url}, snippet={snippet}")
+    WebDriverWait(driver, 15).until(
+        EC.visibility_of_element_located((By.TAG_NAME, "h1"))
+    )
     logout_button = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.LINK_TEXT, "ログアウト"))
     )

@@ -106,6 +106,17 @@ UI テストは Selenium コンテナと専用サービス（`ui-tests`）をテ
 テストは `tests/ui/test_homepage.py` に定義しており、`APP_URL` と `SELENIUM_REMOTE_URL` の環境変数で接続先を切り替えられます。  
 コンテナ終了後に Selenium を停止する場合は `docker compose --profile test stop selenium` を実行してください。
 
+## 継続的インテグレーション (GitHub Actions)
+
+`.github/workflows/ci.yml` で GitHub Actions を設定しています。`push` および `pull_request` のたびに以下が実行されます。
+
+- Docker Compose でアプリ (`app`)、DB (`db`)、Selenium (`selenium`) を起動
+- Flask アプリと Selenium の起動待ち
+- `docker compose --profile test run --rm ui-tests` による UI テスト実行
+- テスト結果のステータスが GitHub に記録され、失敗時は GitHub の標準通知で知らせます
+
+CI をカスタマイズしたい場合は `.github/workflows/ci.yml` を編集してください。
+
 ## サービスの停止
 
 ```bash

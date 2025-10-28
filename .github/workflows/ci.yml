@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build and start core services
+        run: docker compose up -d --build app db
+
+      - name: Wait for Flask app readiness
+        run: |
+          timeout 120 bash -c 'until curl -sSf http://localhost:5000/ > /dev/null; do sleep 2; done'
+
+      - name: Start Selenium service
+        run: docker compose --profile test up -d selenium
+
+      - name: Wait for Selenium readiness
+        run: |
+          timeout 120 bash -c 'until curl -sSf http://localhost:4444/wd/hub/status > /dev/null; do sleep 2; done'
+
+      - name: Run UI test suite
+        run: docker compose --profile test run --rm ui-tests
+
+      - name: Tear down services
+        if: always()
+        run: |
+          docker compose --profile test down --volumes --remove-orphans
+          docker compose down --volumes --remove-orphans

@@ -205,32 +205,6 @@ def logout():
     flash('ログアウトしました。', 'info')
     return redirect(url_for('index'))
 
-@app.route('/db-test')
-def db_test():
-    try:
-        # Connect to the database
-        conn = pymysql.connect(**db_params)
-        cursor = conn.cursor()
-        
-        # Execute a test query
-        cursor.execute('SELECT VERSION();')
-        db_version = cursor.fetchone()
-        
-        # Close the connection
-        cursor.close()
-        conn.close()
-        
-        return render_template('db_test.html', 
-            status='success',
-            message='Database connection successful',
-            db_version=db_version[0]
-        )
-    except Exception as e:
-        return render_template('db_test.html',
-            status='error',
-            message=f'Database connection failed: {str(e)}'
-        )
-
 
 if __name__ == '__main__':
     # アプリケーション起動時にテストユーザーを作成

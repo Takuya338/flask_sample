@@ -78,11 +78,7 @@ class TestNewUserDailyWorkflow:
             assert '田中一郎' in response.get_data(as_text=True)
             time.sleep(0.1)  # 短い間隔でのアクセスをシミュレート
         
-        # 5. データベース接続テストページの確認
-        response = client.get('/db-test')
-        assert response.status_code == 200
-        
-        # 6. 終業時のログアウト
+        # 5. 終業時のログアウト
         response = client.get('/logout', follow_redirects=True)
         assert response.status_code == 200
         assert 'Welcome to Flask with MySQL' in response.get_data(as_text=True)

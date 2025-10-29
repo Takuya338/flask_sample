@@ -71,23 +71,6 @@ def test_homepage_renders(driver, settings):
     assert "Flask MySQL App" in heading.text
 
 
-def test_db_test_page_status(driver, settings):
-    target_url = f"{settings['app_url']}/db-test"
-
-    for attempt in range(5):
-        driver.get(target_url)
-        try:
-            status_banner = WebDriverWait(driver, 20).until(
-                EC.visibility_of_element_located((By.CLASS_NAME, "success"))
-            )
-            assert "Database connection successful" in status_banner.text
-            break
-        except TimeoutException:
-            time.sleep(3)
-    else:
-        pytest.fail("Database test page did not report success within the expected time.")
-
-
 def test_login_page_renders(driver, settings):
     """ログインページの表示テスト"""
     target_url = f"{settings['app_url']}/login"

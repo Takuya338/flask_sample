@@ -252,12 +252,8 @@ class TestDashboardFeatures:
         
         # ダッシュボードでリンクを確認
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.LINK_TEXT, "データベース接続テスト"))
+            EC.presence_of_element_located((By.LINK_TEXT, "ホームページ"))
         )
-        
-        # データベーステストページへのリンク
-        db_test_link = driver.find_element(By.LINK_TEXT, "データベース接続テスト")
-        assert db_test_link.get_attribute("href").endswith("/db-test")
         
         # ホームページへのリンク
         home_link = driver.find_element(By.LINK_TEXT, "ホームページ")
@@ -302,7 +298,7 @@ class TestSecurityFeatures:
         assert "ダッシュボード" in driver.page_source
         
         # 別のページに移動してから戻る
-        driver.get(f"{settings['app_url']}/db-test")
+        driver.get(settings["app_url"])
         time.sleep(1)
         driver.get(f"{settings['app_url']}/dashboard")
         
